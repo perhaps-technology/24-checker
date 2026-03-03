@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>24 Checker</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f1eb;
+    --surface: #ffffff;
+    --surface2: #ebe6db;
+    --border: #d0c8b8;
+    --text: #1a1612;
+    --muted: #6b6255;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-subtle: #eff6ff;
+    --green: #166534;
+    --green-bg: #dcfce7;
+    --green-border: #86efac;
+    --red: #991b1b;
+    --red-bg: #fee2e2;
+    --red-border: #fca5a5;
+    --slot-empty-bg: #ebe6db;
+    --slot-dot: #b8b0a0;
+    --card-red: #dc2626;
+    --card-hover-bg: #fff5f5;
+    --card-hover-border: #dc2626;
+    --modal-bg: #ffffff;
+    --input-bg: #f4f1eb;
+    --preset-bg: #f4f1eb;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #181612;
+      --surface: #242018;
+      --surface2: #2e2920;
+      --border: #3d3830;
+      --text: #f0ece4;
+      --muted: #a09080;
+      --accent: #4080f0;
+      --accent-hover: #5a96f8;
+      --accent-subtle: #1a2540;
+      --green: #4ade80;
+      --green-bg: #052e14;
+      --green-border: #1a5c30;
+      --red: #fc8080;
+      --red-bg: #2a0e0e;
+      --red-border: #7f2020;
+      --slot-empty-bg: #2e2920;
+      --slot-dot: #5a5448;
+      --card-red: #fc8080;
+      --card-hover-bg: #2a1818;
+      --card-hover-border: #fc8080;
+      --modal-bg: #242018;
+      --input-bg: #181612;
+      --preset-bg: #181612;
+    }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 4rem;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 2rem;
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(3rem, 14vw, 5.5rem);
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .settings-btn {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--muted);
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .settings-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border); }
+
+  .subtitle {
+    font-size: 1rem;
+    color: var(--muted);
+    margin-top: 0.3rem;
+    font-weight: 500;
+  }
+
+  .main { width: 100%; max-width: 420px; }
+
+  .section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+
+  /* Slots */
+  .slots-row {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .slot {
+    flex: 1;
+    aspect-ratio: 3/4;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed var(--border);
+    background: var(--slot-empty-bg);
+    transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    position: relative;
+    user-select: none;
+  }
+
+  .slot.filled {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.09);
+  }
+
+  .slot.filled:hover {
+    border-color: var(--card-hover-border);
+    background: var(--card-hover-bg);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  }
+
+  .remove-x {
+    display: none;
+    position: absolute;
+    top: 5px; right: 7px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--card-red);
+  }
+  .slot.filled:hover .remove-x { display: block; }
+
+  .slot-val {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(1.5rem, 6vw, 2.1rem);
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+  }
+  .slot-val.red { color: var(--card-red); }
+
+  .slot-suit { font-size: 1rem; line-height: 1.3; color: var(--text); }
+  .slot-suit.red { color: var(--card-red); }
+
+  .slot-dot { font-size: 1.6rem; color: var(--slot-dot); }
+
+  /* Picker */
+  .picker-section { margin-bottom: 1.75rem; }
+
+  .picker-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.4rem;
+  }
+
+  .pick-btn {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Fraunces', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    aspect-ratio: 5 / 7;
+    padding: 0;
+    cursor: pointer;
+    transition: background 0.1s, border-color 0.1s, transform 0.1s, color 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    text-align: center;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .pick-btn:hover { background: var(--accent-subtle); border-color: var(--accent); color: var(--accent); }
+  .pick-btn:active { transform: scale(0.92); }
+  .pick-btn.chosen { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .deal-btn {
+    aspect-ratio: 5 / 7;
+    border-radius: 8px;
+    border: 1.5px solid #8b1a1a;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.1s, box-shadow 0.15s;
+    position: relative;
+    overflow: hidden;
+    background: #6b0f0f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .deal-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.35); }
+  .deal-btn:active { transform: scale(0.93); }
+
+  .deal-btn svg {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    inset: 0;
+  }
+
+
+
+
+  /* Action buttons */
+  .action-row {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.8rem 1rem;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s, opacity 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-check { background: var(--accent); color: #fff; flex: 1; }
+  .btn-check:hover { background: var(--accent-hover); }
+
+  .btn-deal {
+    background: var(--surface);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+    flex: 0 0 auto;
+    padding: 0.8rem 1.25rem;
+  }
+  .btn-deal:hover { background: var(--surface2); }
+
+  .btn-reset {
+    background: var(--surface);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+    flex: 0 0 auto;
+    padding: 0.8rem 1.25rem;
+  }
+  .btn-reset:hover { background: var(--surface2); color: var(--text); }
+
+  .error-msg {
+    font-size: 0.85rem;
+    color: var(--red);
+    text-align: center;
+    padding: 0.5rem 0;
+    animation: popIn 0.2s ease;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Result */
+  .result-banner {
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    margin-bottom: 0.75rem;
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .result-banner.yes { background: var(--green-bg); border: 1.5px solid var(--green-border); color: var(--green); }
+  .result-banner.no { background: var(--red-bg); border: 1.5px solid var(--red-border); color: var(--red); }
+
+  .result-icon { font-size: 1.6rem; line-height: 1; flex-shrink: 0; }
+  .result-title { font-family: 'Fraunces', serif; font-size: 1.2rem; font-weight: 700; line-height: 1.2; }
+  .result-sub { font-size: 0.85rem; opacity: 0.85; margin-top: 0.15rem; }
+
+  .btn-reveal {
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    border: 1.5px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    margin-bottom: 0.75rem;
+  }
+  .btn-reveal:hover { background: var(--accent-subtle); }
+  .btn-reveal:active { transform: scale(0.97); }
+
+  /* Solutions */
+  .solutions-box { display: none; animation: fadeUp 0.3s ease; }
+  .solutions-box.visible { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .solutions-header {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+
+  .solution-item {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.95rem;
+    color: var(--text);
+    animation: fadeUp 0.25s ease both;
+  }
+  .solution-item:nth-child(2) { animation-delay: 0.04s; }
+  .solution-item:nth-child(3) { animation-delay: 0.08s; }
+  .solution-item:nth-child(4) { animation-delay: 0.12s; }
+  .solution-item:nth-child(5) { animation-delay: 0.16s; }
+
+  /* Settings modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    backdrop-filter: blur(3px);
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--modal-bg);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+    animation: modalIn 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
+    overflow: hidden;
+  }
+
+  @keyframes modalIn {
+    from { transform: scale(0.92) translateY(12px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem 1.25rem 0.9rem;
+    border-bottom: 1.5px solid var(--border);
+  }
+
+  .modal-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 1rem;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+    border-radius: 6px;
+    line-height: 1;
+    transition: background 0.1s, color 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .modal-close:hover { background: var(--surface2); color: var(--text); }
+
+  .modal-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .field-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .field-hint {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+  }
+
+  .input-row { display: flex; gap: 0.5rem; align-items: stretch; min-width: 0; }
+
+  .slash-btn {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Fraunces', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    width: 48px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background 0.1s, border-color 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .slash-btn:hover { background: var(--accent-subtle); border-color: var(--accent); color: var(--accent); }
+  .slash-btn:active { transform: scale(0.93); }
+
+  .target-input {
+    flex: 1;
+    min-width: 0;
+    font-family: 'Fraunces', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text);
+    background: var(--input-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+    outline: none;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+  .target-input::-webkit-inner-spin-button,
+  .target-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .target-input:focus { border-color: var(--accent); }
+
+  .presets { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+  .preset-btn {
+    background: var(--preset-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Fraunces', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 0.45rem 0.9rem;
+    cursor: pointer;
+    transition: background 0.1s, border-color 0.1s, color 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .preset-btn:hover { background: var(--accent-subtle); border-color: var(--accent); color: var(--accent); }
+  .preset-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .modal-footer {
+    padding: 0 1.25rem 1.25rem;
+  }
+
+  .btn-apply {
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.8rem 1rem;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-apply:hover { background: var(--accent-hover); }
+  .btn-apply:active { transform: scale(0.97); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-row">
+    <h1 id="titleNum">24</h1>
+    <button class="settings-btn" onclick="openSettings()" aria-label="Settings">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+  </div>
+  <p class="subtitle" id="subtitleText">Make 24 with 4 cards</p>
+</header>
+
+<div class="main">
+
+  <p class="section-label">Your cards</p>
+  <div class="slots-row" id="slotsRow">
+    <div class="slot" id="slot0"><span class="slot-dot">·</span></div>
+    <div class="slot" id="slot1"><span class="slot-dot">·</span></div>
+    <div class="slot" id="slot2"><span class="slot-dot">·</span></div>
+    <div class="slot" id="slot3"><span class="slot-dot">·</span></div>
+  </div>
+
+  <div class="picker-section">
+    <p class="section-label">Tap to add a card</p>
+    <div class="picker-grid" id="pickerGrid"></div>
+  </div>
+
+  <div class="action-row">
+    <button class="btn btn-check" id="checkBtn" onclick="checkNow()">Check</button>
+    <button class="btn btn-reset" onclick="resetAll()">Reset</button>
+  </div>
+
+  <div id="resultArea"></div>
+  <div class="solutions-box" id="solutionsBox"></div>
+
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsOverlay" onclick="closeSettingsOutside(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Settings</span>
+      <button class="modal-close" onclick="closeSettings()" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div>
+        <label class="field-label" for="targetInput">Target number</label>
+        <p class="field-hint">Enter a whole number, decimal, or fraction like 1/2 or 3/4.</p>
+        <div class="input-row">
+          <input type="text" id="targetInput" class="target-input" inputmode="decimal" value="24" placeholder="e.g. 24 or 3/4" />
+          <button type="button" class="slash-btn" onclick="insertSlash()" tabindex="-1">∕</button>
+        </div>
+      </div>
+      <div>
+        <span class="field-label">Presets</span>
+        <div class="presets" id="presetBtns">
+          <button class="preset-btn active" onclick="setPreset(24)">24</button>
+          <button class="preset-btn" onclick="setPreset(36)">36</button>
+          <button class="preset-btn" onclick="setPreset(48)">48</button>
+          <button class="preset-btn" onclick="setPreset(100)">100</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-apply" onclick="applyTarget()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const VALUES = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const NUM_MAP = {A:1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,J:11,Q:12,K:13};
+const SUITS = ['♠','♥','♦','♣'];
+const RED = new Set(['♥','♦']);
+const PRESETS = [24, 36, 48, 100];
+
+let cards = [];
+let solutionsFound = [];
+let resultShown = false;
+let target = 24;
+let targetDisplay = "24";
+
+// Build picker
+const grid = document.getElementById('pickerGrid');
+VALUES.forEach(v => {
+  const btn = document.createElement('button');
+  btn.className = 'pick-btn';
+  btn.textContent = v;
+  btn.id = 'pick-' + v;
+  btn.onclick = () => addCard(v);
+  grid.appendChild(btn);
+});
+
+// Deal random card button
+const dealBtn = document.createElement('button');
+dealBtn.className = 'deal-btn';
+dealBtn.title = 'Deal a random card';
+dealBtn.onclick = () => addCard(VALUES[Math.floor(Math.random() * VALUES.length)]);
+dealBtn.innerHTML = `
+  <svg viewBox="0 0 60 84" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+    <rect width="60" height="84" fill="#6b0f0f"/>
+    <rect x="2" y="2" width="56" height="80" rx="4" fill="none" stroke="#a02020" stroke-width="1.5"/>
+    <pattern id="dp" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
+      <path d="M5 0 L10 5 L5 10 L0 5 Z" fill="none" stroke="#8b1a1a" stroke-width="0.9" opacity="0.8"/>
+    </pattern>
+    <rect x="4" y="4" width="52" height="76" rx="3" fill="url(#dp)"/>
+    <g transform="translate(30,42)" opacity="0.85">
+      <path d="M0 -8 L5 -3 L8 0 L5 3 L0 8 L-5 3 L-8 0 L-5 -3 Z" fill="#c03030" stroke="#f08080" stroke-width="0.6"/>
+      <circle cx="0" cy="0" r="2.5" fill="#f08080"/>
+    </g>
+    <circle cx="8" cy="8" r="2" fill="#a02020" opacity="0.8"/>
+    <circle cx="52" cy="76" r="2" fill="#a02020" opacity="0.8"/>
+  </svg>
+<span style="position:relative;z-index:1;font-family:'Fraunces',serif;font-weight:900;font-size:1.8rem;color:#ffffff;text-shadow:0 1px 6px rgba(0,0,0,0.5)">?</span>
+`;
+grid.appendChild(dealBtn);
+
+function addCard(val) {
+  const suit = SUITS[Math.floor(Math.random() * 4)];
+  if (cards.length >= 4) cards.shift();
+  cards.push({ val, suit });
+  resultShown = false;
+  render();
+}
+
+function removeCard(i, el) {
+  cards.splice(i, 1);
+  resultShown = false;
+  if (el) el.blur();
+  render();
+}
+
+function render() {
+  for (let i = 0; i < 4; i++) {
+    const slot = document.getElementById('slot' + i);
+    if (cards[i]) {
+      const { val, suit } = cards[i];
+      const isRed = RED.has(suit);
+      slot.className = 'slot filled';
+      slot.innerHTML = `
+        <span class="remove-x">✕</span>
+        <span class="slot-val${isRed ? ' red' : ''}">${val}</span>
+        <span class="slot-suit${isRed ? ' red' : ''}">${suit}</span>
+      `;
+      const idx = i;
+      slot.onclick = (e) => removeCard(idx, e.currentTarget);
+    } else {
+      slot.className = 'slot';
+      slot.innerHTML = '<span class="slot-dot">·</span>';
+      slot.onclick = null;
+    }
+  }
+
+  const counts = {};
+  cards.forEach(c => counts[c.val] = (counts[c.val] || 0) + 1);
+  VALUES.forEach(v => {
+    document.getElementById('pick-' + v).classList.toggle('chosen', !!counts[v]);
+  });
+
+  if (!resultShown) {
+    document.getElementById('resultArea').innerHTML = '';
+    document.getElementById('solutionsBox').classList.remove('visible');
+    solutionsFound = [];
+  }
+}
+
+function checkNow() {
+  if (cards.length < 4) {
+    document.getElementById('resultArea').innerHTML = '<p class="error-msg">Add ' + (4 - cards.length) + ' more card' + (4 - cards.length !== 1 ? 's' : '') + ' to check.</p>';
+    document.getElementById('solutionsBox').classList.remove('visible');
+    return;
+  }
+  const nums = cards.map(c => NUM_MAP[c.val]);
+  solutionsFound = solve(nums, target);
+  const has = solutionsFound.length > 0;
+  resultShown = true;
+
+  document.getElementById('resultArea').innerHTML = `
+    <div class="result-banner ${has ? 'yes' : 'no'}">
+      <span class="result-icon">${has ? '✓' : '✗'}</span>
+      <div>
+        <div class="result-title">${has ? 'Solvable!' : 'No Solution'}</div>
+        <div class="result-sub">${has
+          ? `${solutionsFound.length} expression${solutionsFound.length > 1 ? 's' : ''} found`
+          : `These four cards cannot make ${target}`
+        }</div>
+      </div>
+    </div>
+    ${has ? `<button class="btn-reveal" onclick="revealSolutions()">Reveal Solutions</button>` : ''}
+  `;
+
+  document.getElementById('solutionsBox').classList.remove('visible');
+}
+
+function revealSolutions() {
+  const shown = solutionsFound.slice(0, 8);
+  const box = document.getElementById('solutionsBox');
+  box.innerHTML = `
+    <p class="solutions-header">Solutions (${shown.length} of ${solutionsFound.length})</p>
+    ${shown.map(s => `<div class="solution-item">${s} = ${target}</div>`).join('')}
+  `;
+  box.classList.add('visible');
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function dealCards() {
+  cards = VALUES.flatMap(v => SUITS.map(s => ({ val: v, suit: s })));
+  // shuffle
+  for (let i = cards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [cards[i], cards[j]] = [cards[j], cards[i]];
+  }
+  cards = cards.slice(0, 4);
+  resultShown = false;
+  render();
+  document.getElementById('resultArea').innerHTML = '';
+  document.getElementById('solutionsBox').classList.remove('visible');
+}
+
+function resetAll() {
+  cards = [];
+  solutionsFound = [];
+  resultShown = false;
+  render();
+  document.getElementById('resultArea').innerHTML = '';
+  document.getElementById('solutionsBox').classList.remove('visible');
+}
+
+// ---- Settings ----
+function openSettings() {
+  document.getElementById('targetInput').value = targetDisplay;
+  updatePresetHighlights(target);
+  document.getElementById('settingsOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('targetInput').focus(), 100);
+}
+
+function closeSettings() {
+  document.getElementById('settingsOverlay').classList.remove('open');
+}
+
+function closeSettingsOutside(e) {
+  if (e.target === document.getElementById('settingsOverlay')) closeSettings();
+}
+
+function setPreset(val) {
+  document.getElementById('targetInput').value = val;
+  targetDisplay = String(val);
+  updatePresetHighlights(val);
+}
+
+function updatePresetHighlights(val) {
+  document.querySelectorAll('.preset-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', PRESETS[i] === val);
+  });
+}
+
+function insertSlash() {
+  const input = document.getElementById('targetInput');
+  const start = input.selectionStart;
+  const end = input.selectionEnd;
+  const val = input.value;
+  input.value = val.slice(0, start) + '/' + val.slice(end);
+  const pos = start + 1;
+  input.focus();
+  input.setSelectionRange(pos, pos);
+  // trigger input event for validation/highlight sync
+  input.dispatchEvent(new Event('input'));
+}
+
+function parseFraction(str) {
+  str = str.trim();
+  const parts = str.split('/');
+  if (parts.length === 2) {
+    const num = parseFloat(parts[0]);
+    const den = parseFloat(parts[1]);
+    if (!isNaN(num) && !isNaN(den) && den !== 0) return num / den;
+    return NaN;
+  }
+  return parseFloat(str);
+}
+
+function applyTarget() {
+  const raw = parseFraction(document.getElementById('targetInput').value);
+  if (isNaN(raw) || raw === 0) {
+    document.getElementById('targetInput').style.borderColor = 'var(--red)';
+    return;
+  }
+  document.getElementById('targetInput').style.borderColor = '';
+  target = raw;
+  const inputVal = document.getElementById('targetInput').value.trim();
+  targetDisplay = inputVal;
+  const displayStr = inputVal;
+  document.getElementById('titleNum').textContent = displayStr;
+  document.getElementById('subtitleText').textContent = `Make ${displayStr} with 4 cards`;
+  // clear result since target changed
+  resultShown = false;
+  document.getElementById('resultArea').innerHTML = '';
+  document.getElementById('solutionsBox').classList.remove('visible');
+  solutionsFound = [];
+  closeSettings();
+}
+
+// Also allow Enter key in input
+document.getElementById('targetInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') applyTarget();
+});
+document.getElementById('targetInput').addEventListener('input', e => {
+  const val = parseFraction(e.target.value);
+  e.target.style.borderColor = '';
+  if (!isNaN(val)) updatePresetHighlights(val);
+});
+
+// ---- Solver ----
+const OPS = ['+','-','*','/'];
+
+function opVal(a, b, o) {
+  if (o==='+') return a+b;
+  if (o==='-') return a-b;
+  if (o==='*') return a*b;
+  if (o==='/') return b===0 ? null : a/b;
+}
+
+function nearTarget(v) { return Math.abs(v - target) < 1e-9; }
+
+function perms(arr) {
+  if (arr.length <= 1) return [arr.slice()];
+  const r = [];
+  arr.forEach((v,i) => {
+    const rest = arr.filter((_,j) => j!==i);
+    perms(rest).forEach(p => r.push([v,...p]));
+  });
+  return r;
+}
+
+function solve(nums, tgt) {
+  const out = new Set();
+  perms(nums).forEach(([a,b,c,d]) => {
+    for (const o1 of OPS) for (const o2 of OPS) for (const o3 of OPS) {
+      let t;
+      // ((a o1 b) o2 c) o3 d
+      t=opVal(a,b,o1); if(t!=null){let t2=opVal(t,c,o2);if(t2!=null){let t3=opVal(t2,d,o3);if(t3!=null&&Math.abs(t3-tgt)<1e-9)out.add(`((${a} ${o1} ${b}) ${o2} ${c}) ${o3} ${d}`);}}
+      // (a o1 (b o2 c)) o3 d
+      t=opVal(b,c,o2); if(t!=null){let t2=opVal(a,t,o1);if(t2!=null){let t3=opVal(t2,d,o3);if(t3!=null&&Math.abs(t3-tgt)<1e-9)out.add(`(${a} ${o1} (${b} ${o2} ${c})) ${o3} ${d}`);}}
+      // a o1 ((b o2 c) o3 d)
+      t=opVal(b,c,o2); if(t!=null){let t2=opVal(t,d,o3);if(t2!=null){let t3=opVal(a,t2,o1);if(t3!=null&&Math.abs(t3-tgt)<1e-9)out.add(`${a} ${o1} ((${b} ${o2} ${c}) ${o3} ${d})`);}}
+      // a o1 (b o2 (c o3 d))
+      t=opVal(c,d,o3); if(t!=null){let t2=opVal(b,t,o2);if(t2!=null){let t3=opVal(a,t2,o1);if(t3!=null&&Math.abs(t3-tgt)<1e-9)out.add(`${a} ${o1} (${b} ${o2} (${c} ${o3} ${d}))`);}}
+      // (a o1 b) o2 (c o3 d)
+      let ab=opVal(a,b,o1),cd=opVal(c,d,o3);
+      if(ab!=null&&cd!=null){let t3=opVal(ab,cd,o2);if(t3!=null&&Math.abs(t3-tgt)<1e-9)out.add(`(${a} ${o1} ${b}) ${o2} (${c} ${o3} ${d})`);}
+    }
+  });
+  return [...out];
+}
+
+render();
+</script>
+</body>
+</html>
